@@ -1,0 +1,201 @@
+# AI Clone Platform - Cursor Rules
+
+## Architecture Principles
+
+1. **NEVER couple application logic to a single AI provider**
+   - Always route through the Model Orchestrator
+   - Use Provider Adapters for all external AI services
+   - No direct API calls to providers in routes or services
+
+2. **Provider Abstraction**
+   - All providers MUST implement BaseProvider interface
+   - Each adapter handles provider-specific logic
+   - Consistent error handling across providers
+
+3. **Async-First**
+   - Use async/await for all I/O operations
+   - Leverage asyncio.gather() for parallel execution
+   - Never block the event loop
+
+4. **Queue Heavy Tasks**
+   - Any operation > 30 seconds goes to queue
+   - GPU tasks MUST run in workers
+   - Keep API responses under 30s
+
+## Code Style
+
+### Python (Backend)
+
+- Use Python 3.11+ features
+- Type hints on all functions
+- Black for formatting (line length: 88)
+- Ruff for linting
+- Structured logging with structlog
+
+### TypeScript (Frontend)
+
+- Strict TypeScript mode
+- Use React Server Components where possible
+- Server Actions for mutations
+- Client components only when needed (interactivity)
+
+## File Organization
+
+### Backend Structure
+```
+app/
+  ├── routers/          # API endpoints
+  ├── services/         # Business logic
+  ├── providers/        # AI provider adapters
+  ├── orchestrator/     # Model routing
+  ├── models/           # Database models
+  ├── schemas/          # Pydantic schemas
+  └── workers/          # Queue tasks
+```
+
+### Frontend Structure
+```
+src/
+  ├── app/              # Next.js pages (App Router)
+  ├── components/       # React components
+  │   └── ui/          # shadcn components
+  ├── lib/             # Utilities
+  ├── stores/          # Zustand stores
+  └── types/           # TypeScript types
+```
+
+## Naming Conventions
+
+### Python
+- Files: snake_case.py
+- Classes: PascalCase
+- Functions: snake_case
+- Constants: UPPER_SNAKE_CASE
+- Private: _prefix
+
+### TypeScript
+- Files: kebab-case.tsx
+- Components: PascalCase
+- Functions: camelCase
+- Constants: UPPER_SNAKE_CASE
+- Types/Interfaces: PascalCase
+
+## API Design
+
+### Endpoints
+- Use REST conventions
+- Version APIs: /api/v1/
+- Plural nouns: /users, /models, /generations
+- Use proper HTTP methods and status codes
+
+### Response Format
+```json
+{
+  "data": {...},
+  "meta": {
+    "cost": 0.05,
+    "latency": 1.23
+  }
+}
+```
+
+### Error Format
+```json
+{
+  "error": {
+    "code": "PROVIDER_ERROR",
+    "message": "Human-readable message",
+    "details": {}
+  }
+}
+```
+
+## Database
+
+- Use SQLAlchemy async
+- Migrations with Alembic
+- Always include created_at/updated_at
+- Use UUIDs for primary keys
+- Index foreign keys and frequent queries
+
+## Security
+
+- JWT for authentication
+- Hash passwords with bcrypt
+- Validate all inputs with Pydantic
+- Rate limit by user plan
+- Log all generation requests
+- NEVER expose API keys in responses
+
+## Cost Tracking
+
+- Track cost for EVERY generation
+- Log provider, latency, and cost
+- Update provider_metrics table
+- Use for intelligent routing
+
+## Testing
+
+- Unit tests for business logic
+- Integration tests for API endpoints
+- Mock provider responses
+- Test failover scenarios
+
+## Logging
+
+```python
+logger.info(
+    "Generation completed",
+    user_id=user_id,
+    provider=provider,
+    cost=cost,
+    latency=latency
+)
+```
+
+## Comments
+
+- Document WHY, not WHAT
+- Explain complex algorithms
+- Note provider-specific quirks
+- Link to external docs when relevant
+
+## Performance
+
+- Use database connection pooling
+- Cache expensive operations in Redis
+- Parallel execution for independent tasks
+- Stream large responses
+- Optimize database queries with indexes
+
+## Deployment
+
+- Frontend: Vercel
+- Backend: Fly.io or Railway
+- Workers: Separate process
+- Database: Managed PostgreSQL
+- Redis: Managed Redis
+- Storage: Cloudflare R2 or S3
+
+## Environment Variables
+
+- Never commit .env files
+- Use .env.example as template
+- Validate required vars on startup
+- Use pydantic-settings for config
+
+## Git Workflow
+
+- Feature branches from main
+- Descriptive commit messages
+- Review before merge
+- Keep commits atomic
+- No secrets in git history
+
+## Priority Rules
+
+1. **Security** - Never compromise
+2. **Provider Abstraction** - Always maintain
+3. **Cost Tracking** - Track everything
+4. **Performance** - Parallel when possible
+5. **Code Quality** - Readable > clever
