@@ -21,26 +21,27 @@ export default function SignIn() {
     setLoading(true);
 
     try {
-      // TODO: Replace with actual API call
-      // const response = await api.post('/api/v1/auth/login', formData);
-      
-      // Mock authentication for now
-      if (formData.email && formData.password) {
-        // Simulate successful login
-        setUser({
-          id: '1',
-          email: formData.email,
-          name: formData.email.split('@')[0],
-          plan: 'free',
-          credits: 100,
-        });
-        
-        router.push('/dashboard');
-      } else {
-        setError('Please fill in all fields');
+      const response = await fetch('http://localhost:8001/api/v1/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.detail || 'Login failed');
       }
-    } catch (err) {
-      setError('Invalid email or password');
+
+      // Store token and user data
+      localStorage.setItem('token', data.access_token);
+      setUser(data.user);
+      
+      router.push('/dashboard');
+    } catch (err: any) {
+      setError(err.message || 'Invalid email or password');
     } finally {
       setLoading(false);
     }

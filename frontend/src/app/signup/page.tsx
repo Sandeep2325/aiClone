@@ -35,21 +35,31 @@ export default function SignUp() {
     setLoading(true);
 
     try {
-      // TODO: Replace with actual API call
-      // const response = await api.post('/api/v1/auth/register', formData);
-      
-      // Mock registration for now
-      setUser({
-        id: '1',
-        email: formData.email,
-        name: formData.name,
-        plan: 'free',
-        credits: 100,
+      const response = await fetch('http://localhost:8001/api/v1/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password,
+          name: formData.name,
+        }),
       });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.detail || 'Registration failed');
+      }
+
+      // Store token and user data
+      localStorage.setItem('token', data.access_token);
+      setUser(data.user);
       
       router.push('/dashboard');
-    } catch (err) {
-      setError('Failed to create account. Please try again.');
+    } catch (err: any) {
+      setError(err.message || 'Failed to create account. Please try again.');
     } finally {
       setLoading(false);
     }
